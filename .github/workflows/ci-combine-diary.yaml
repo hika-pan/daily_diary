@@ -5,6 +5,9 @@ on:
     paths:
       - 'daily_diary/**/*.md'
 
+permissions:
+  contents: write
+
 jobs:
   combine_diaries:
     runs-on: ubuntu-latest
@@ -53,7 +56,6 @@ jobs:
             YEAR=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f1)
             MONTH=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f2)
 
-            # 実行権限を付与済みなので、直接呼び出し
             .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
 
             git add "daily_diary/${YEAR}/${MONTH}/${YEAR}${MONTH}_combined.md"
