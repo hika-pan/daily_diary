@@ -3,7 +3,7 @@ name: Combine Monthly Diaries
 on:
   push:
     paths:
-      - '**/??????.md' # 任意のディレクトリ階層にあるYYYYMMDD.md形式のファイルを対象
+      - '????/??/*.md' # 年（4桁）/月（2桁）/任意の.mdファイル
 
 jobs:
   combine_diaries:
