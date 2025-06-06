@@ -1,0 +1,58 @@
+name: Combine Monthly Diaries
+
+on:
+  push:
+    paths:
+      - '????/??/??????.md' # 例: 2024/05/20240523.md のようなパスパターン
+
+jobs:
+  combine_diaries:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # プッシュバックするためにトークンが必要
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current month and year
+        id: date
+        run: |
+          YEAR=$(date +%Y)
+          MONTH=$(date +%m)
+          echo "YEAR=$YEAR" >> $GITHUB_ENV
+          echo "MONTH=$MONTH" >> $GITHUB_ENV
+
+      - name: Combine daily diaries
+        run: |
+          MONTH_DIR="${{ env.YEAR }}/${{ env.MONTH }}"
+          COMBINED_FILE="${MONTH_DIR}/${{ env.YEAR }}${{ env.MONTH }}_combined.md"
+
+          # 既存の結合ファイルを削除（毎回作り直すため）
+          if [ -f "$COMBINED_FILE" ]; then
+            rm "$COMBINED_FILE"
+          fi
+
+          # ヘッダーを追加
+          echo "# ${{ env.YEAR }}年${{ env.MONTH }}月の日記" >> "$COMBINED_FILE"
+          echo "" >> "$COMBINED_FILE"
+
+          # 日記ファイルを日付順に結合
+          for file in $(ls -v "${MONTH_DIR}"/*.md); do
+            FILENAME=$(basename "$file" .md)
+            if [[ "$FILENAME" =~ ^[0-9]{8}$ ]]; then # 日付形式のファイルのみを対象
+              echo "---" >> "$COMBINED_FILE"
+              echo "## ${FILENAME:0:4}年${FILENAME:4:2}月${FILENAME:6:2}日" >> "$COMBINED_FILE"
+              echo "" >> "$COMBINED_FILE"
+              cat "$file" >> "$COMBINED_FILE"
+              echo "" >> "$COMBINED_FILE"
+            fi
+          done
+
+      - name: Commit and push combined file
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "${{ env.YEAR }}/${{ env.MONTH }}/${{ env.YEAR }}${{ env.MONTH }}_combined.md"
+          git commit -m "Add/Update combined diary for ${{ env.YEAR }}-${{ env.MONTH }}" || echo "No changes to commit"
+          git push
