@@ -17,7 +17,7 @@ jobs:
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.x' # 最新の安定版Rubyバージョンを指定 (例: '3.3')
+          ruby-version: '3.4.4'
           bundler-cache: true # 依存関係がある場合はキャッシュ (Gemfileがある場合)
 
       - name: Get changed diary files and their months
