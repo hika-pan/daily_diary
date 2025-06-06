@@ -16,16 +16,19 @@ YEAR="$1"
 MONTH="$2"
 DIARY_ROOT="daily_diary" # 日記のルートディレクトリ
 
-MONTH_DIR="${DIARY_ROOT}/${YEAR}/${MONTH}"
-COMBINED_FILE="${MONTH_DIR}/${YEAR}${MONTH}_combined.md"
+MONTHLY_DIR="${DIARY_ROOT}/${YEAR}/monthly"
+COMBINED_FILE="${MONTHLY_DIR}/${YEAR}${MONTH}_combined.md"
 
-echo "--- Processing ${MONTH_DIR} ---"
+echo "--- Processing ${DIARY_ROOT}/${YEAR}/${MONTH} ---"
 
 # 対象月のディレクトリが存在しない場合はスキップ
-if [ ! -d "$MONTH_DIR" ]; then
-  echo "Directory $MONTH_DIR does not exist. Skipping combine for ${YEAR}/${MONTH}."
+if [ ! -d "${DIARY_ROOT}/${YEAR}/${MONTH}" ]; then
+  echo "Directory ${DIARY_ROOT}/${YEAR}/${MONTH} does not exist. Skipping combine for ${YEAR}/${MONTH}."
   exit 0 # スクリプトを正常終了
 fi
+
+# monthly ディレクトリが存在しない場合は作成
+mkdir -p "$MONTHLY_DIR"
 
 # 既存の結合ファイルを削除（毎回作り直すため）
 if [ -f "$COMBINED_FILE" ]; then
@@ -38,9 +41,9 @@ echo "# ${YEAR}年${MONTH}月の日記" >> "$COMBINED_FILE"
 echo "" >> "$COMBINED_FILE" # ヘッダーの下の空白行はそのまま残します。
 
 # 日記ファイルを日付順に結合
-find "${MONTH_DIR}" -maxdepth 1 -type f -name "????????.md" | sort | while read -r file; do
+find "${DIARY_ROOT}/${YEAR}/${MONTH}" -maxdepth 1 -type f -name "????????.md" | sort | while read -r file; do
   FILENAME=$(basename "$file" .md)
-  
+
   # ファイル名が8桁の数字（YYYYMMDD）形式であることを確認
   if [[ "$FILENAME" =~ ^[0-9]{8}$ ]]; then
     FILE_YEAR="${FILENAME:0:4}"
@@ -49,14 +52,12 @@ find "${MONTH_DIR}" -maxdepth 1 -type f -name "????????.md" | sort | while read 
 
     # Rubyスクリプトを呼び出して曜日を取得
     DOW_NAME=$(ruby .github/scripts/get_day_of_week.rb "$FILE_YEAR" "$FILE_MONTH" "$FILE_DAY")
-    
-    # Rubyスクリプトがエラーを返した場合のチェック
+
     if [ "$DOW_NAME" == "Invalid Date" ]; then
       echo "Warning: Could not determine day of week for $FILE_YEAR/$FILE_MONTH/$FILE_DAY. Skipping."
       continue # この日記ファイルの処理をスキップ
     fi
 
-    # 区切り線と小見出しの間に空白行を入れる
     echo "---" >> "$COMBINED_FILE"
     echo "" >> "$COMBINED_FILE"
     echo "## ${FILE_YEAR}/${FILE_MONTH}/${FILE_DAY} (${DOW_NAME})" >> "$COMBINED_FILE"
@@ -68,10 +69,9 @@ find "${MONTH_DIR}" -maxdepth 1 -type f -name "????????.md" | sort | while read 
   fi
 done
 
-# 結合ファイルの末尾から連続する空行を全て削除し、最後に1つだけ改行を残す
 if [ -s "$COMBINED_FILE" ]; then
     sed -i -E ':a; /^\s*$/{$d;N;ba};' "$COMBINED_FILE"
-    echo "" >> "$COMBINED_FILE" # 最後の改行を明示的に追加
+    echo "" >> "$COMBINED_FILE"
 else
     echo "Combined file is empty, no trailing newlines to remove."
 fi
