@@ -3,7 +3,7 @@ name: Combine Monthly Diaries
 on:
   push:
     paths:
-      - '????/??/*.md' # 年（4桁）/月（2桁）/任意の.mdファイル
+      - '**/*.md' # リポジトリ内の任意の.mdファイルを対象とする（広めに設定）
 
 jobs:
   combine_diaries:
@@ -12,47 +12,83 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # プッシュバックするためにトークンが必要
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get current month and year
-        id: date
+      - name: Get changed markdown files and their months
+        id: changed_files
         run: |
-          YEAR=$(date +%Y)
-          MONTH=$(date +%m)
-          echo "YEAR=$YEAR" >> $GITHUB_ENV
-          echo "MONTH=$MONTH" >> $GITHUB_ENV
-
-      - name: Combine daily diaries
-        run: |
-          MONTH_DIR="${{ env.YEAR }}/${{ env.MONTH }}"
-          COMBINED_FILE="${MONTH_DIR}/${{ env.YEAR }}${{ env.MONTH }}_combined.md"
-
-          # 既存の結合ファイルを削除（毎回作り直すため）
-          if [ -f "$COMBINED_FILE" ]; then
-            rm "$COMBINED_FILE"
+          # 直前のコミットとの差分から変更された.mdファイルを取得
+          # 最初のコミットの場合はHEADとツリーの差分を取るなどの工夫が必要になるが、
+          # 通常の日記運用では変更があったファイルを見るだけで十分
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- '*.md' | grep -E '^[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$')
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "No relevant diary files changed. Exiting."
+            echo "::set-output name=should_run::false"
+            exit 0 # 関連する日記ファイルの変更がなければジョブを終了
           fi
 
-          # ヘッダーを追加
-          echo "# ${{ env.YEAR }}年${{ env.MONTH }}月の日記" >> "$COMBINED_FILE"
-          echo "" >> "$COMBINED_FILE"
+          # 変更されたファイルから影響を受ける年月のリストを生成
+          # ユニークな年/月ディレクトリを抽出する
+          AFFECTED_MONTHS=$(echo "$CHANGED_FILES" | sed -E 's|^([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
+          
+          echo "Affected months: $AFFECTED_MONTHS"
+          echo "::set-output name=affected_months::$AFFECTED_MONTHS"
+          echo "::set-output name=should_run::true"
 
-          # 日記ファイルを日付順に結合
-          for file in $(ls -v "${MONTH_DIR}"/*.md); do
-            FILENAME=$(basename "$file" .md)
-            if [[ "$FILENAME" =~ ^[0-9]{8}$ ]]; then # 日付形式のファイルのみを対象
-              echo "---" >> "$COMBINED_FILE"
-              echo "## ${FILENAME:0:4}年${FILENAME:4:2}月${FILENAME:6:2}日" >> "$COMBINED_FILE"
-              echo "" >> "$COMBINED_FILE"
-              cat "$file" >> "$COMBINED_FILE"
-              echo "" >> "$COMBINED_FILE"
+      - name: Combine daily diaries for affected months
+        # should_runがtrueの場合のみ実行
+        if: steps.changed_files.outputs.should_run == 'true'
+        run: |
+          # 影響を受ける月ごとに結合処理を行う
+          for MONTH_PATH in ${{ steps.changed_files.outputs.affected_months }}; do
+            YEAR=$(echo "$MONTH_PATH" | cut -d'/' -f1)
+            MONTH=$(echo "$MONTH_PATH" | cut -d'/' -f2)
+            
+            MONTH_DIR="${YEAR}/${MONTH}"
+            COMBINED_FILE="${MONTH_DIR}/${YEAR}${MONTH}_combined.md"
+
+            echo "--- Processing $MONTH_DIR ---"
+
+            # 対象月のディレクトリが存在しない場合はスキップ（念のため）
+            if [ ! -d "$MONTH_DIR" ]; then
+              echo "Directory $MONTH_DIR does not exist. Skipping combine."
+              continue
             fi
+
+            # 既存の結合ファイルを削除（毎回作り直すため）
+            if [ -f "$COMBINED_FILE" ]; then
+              rm "$COMBINED_FILE"
+            fi
+
+            # ヘッダーを追加
+            echo "# ${YEAR}年${MONTH}月の日記" >> "$COMBINED_FILE"
+            echo "" >> "$COMBINED_FILE"
+
+            # 日記ファイルを日付順に結合
+            # find コマンドを使って安全にファイルリストを取得し、sortで日付順に並べる
+            find "${MONTH_DIR}" -maxdepth 1 -type f -name "??????.md" | sort | while read -r file; do
+              FILENAME=$(basename "$file" .md)
+              # ファイル名がYYYYMMDD形式であることを確認
+              if [[ "$FILENAME" =~ ^[0-9]{8}$ ]]; then
+                echo "---" >> "$COMBINED_FILE"
+                echo "## ${FILENAME:0:4}年${FILENAME:4:2}月${FILENAME:6:2}日" >> "$COMBINED_FILE"
+                echo "" >> "$COMBINED_FILE"
+                cat "$file" >> "$COMBINED_FILE"
+                echo "" >> "$COMBINED_FILE"
+              fi
+            done
+            echo "Combined file created: $COMBINED_FILE"
+            git add "$COMBINED_FILE" # 結合ファイルを追加ステージング
           done
 
       - name: Commit and push combined file
+        # should_runがtrueの場合のみ実行
+        if: steps.changed_files.outputs.should_run == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ env.YEAR }}/${{ env.MONTH }}/${{ env.YEAR }}${{ env.MONTH }}_combined.md"
-          git commit -m "Add/Update combined diary for ${{ env.YEAR }}-${{ env.MONTH }}" || echo "No changes to commit"
+          
+          # 変更がなければコミットしない
+          git diff --cached --exit-code || git commit -m "Add/Update combined diary files"
           git push
