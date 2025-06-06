@@ -3,7 +3,7 @@ name: Combine Monthly Diaries
 on:
   push:
     paths:
-      - 'daily_diary/**/*.md' 
+      - 'daily_diary/**/*.md'
 
 jobs:
   combine_diaries:
@@ -18,42 +18,31 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.4.4'
-          bundler-cache: true # 依存関係がある場合はキャッシュ (Gemfileがある場合)
+          bundler-cache: true
 
       - name: Get changed diary files and their months
         id: changed_files
         run: |
-          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'daily_diary/**/*.md' | grep -E '^daily_diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$')
-          
+          # 変更されたファイルを特定
+          # HEAD~1 が存在するかどうかをチェックし、存在しない場合はリポジトリ内のすべての関連ファイルを対象にする
+          if git rev-parse --verify HEAD~1 &>/dev/null; then
+            # HEAD~1 が存在する場合、差分から変更されたファイルを取得
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'daily_diary/**/*.md' | grep -E '^daily_diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$')
+          else
+            # HEAD~1 が存在しない（最初のコミットなど）場合、リポジトリ内のすべての関連ファイルを取得
+            echo "HEAD~1 does not exist. Assuming initial push or single commit, processing all relevant diary files."
+            CHANGED_FILES=$(git ls-files 'daily_diary/**/*.md' | grep -E '^daily_diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$')
+          fi
+
           if [ -z "$CHANGED_FILES" ]; then
-            echo "No relevant diary files changed in daily_diary. Exiting."
+            echo "No relevant diary files found or changed in daily_diary. Exiting."
             echo "::set-output name=should_run::false"
             exit 0
           fi
 
           AFFECTED_MONTHS=$(echo "$CHANGED_FILES" | sed -E 's|^daily_diary/([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
-          
+
           echo "Affected months: $AFFECTED_MONTHS"
           echo "::set-output name=affected_months::$AFFECTED_MONTHS"
           echo "::set-output name=should_run::true"
-
-      - name: Combine daily diaries for affected months
-        if: steps.changed_files.outputs.should_run == 'true'
-        run: |
-          for MONTH_PATH_YEAR_MONTH in ${{ steps.changed_files.outputs.affected_months }}; do
-            YEAR=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f1)
-            MONTH=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f2)
-            
-            .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
-            
-            git add "daily_diary/${YEAR}/${MONTH}/${YEAR}${MONTH}_combined.md"
-          done
-
-      - name: Commit and push combined file
-        if: steps.changed_files.outputs.should_run == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git diff --cached --exit-code || git commit -m "Add/Update combined diary files (automated)"
-          git push
+          shell: /usr/bin/bash -e {0}
