@@ -33,25 +33,23 @@ jobs:
 
           if [ -z "$CHANGED_FILES" ]; then
             echo "No relevant diary files found or changed in daily_diary. Exiting."
-            # --- set-output の修正 ---
             echo "should_run=false" >> "$GITHUB_OUTPUT"
-            # ------------------------
             exit 0
           fi
 
-          AFFECTED_MONTHS=$(echo "$CHANGED_FILES" | sed -E 's|^daily_diary/([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
+          # AFFECTED_MONTHS を改行区切りからスペース区切りに変換
+          # IFS を一時的に変更して改行をスペースとして処理し、その後にtrimする
+          AFFECTED_MONTHS_RAW=$(echo "$CHANGED_FILES" | sed -E 's|^daily_diary/([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
+          AFFECTED_MONTHS=$(echo "$AFFECTED_MONTHS_RAW" | tr '\n' ' ' | sed -E 's/ +$//') # 末尾のスペースを削除
 
           echo "Affected months: $AFFECTED_MONTHS"
-          # --- set-output の修正 ---
           echo "affected_months=$AFFECTED_MONTHS" >> "$GITHUB_OUTPUT"
           echo "should_run=true" >> "$GITHUB_OUTPUT"
-          # ------------------------
-          # shell: /usr/bin/bash -e {0} <-- この行はrun:ブロックの外に置くべきなので、削除します。
-          # ワークフローのデフォルトシェルがbashなので、通常は明示的な記述は不要です。
 
       - name: Combine daily diaries for affected months
         if: steps.changed_files.outputs.should_run == 'true'
         run: |
+          # スペース区切りの文字列をループで処理
           for MONTH_PATH_YEAR_MONTH in ${{ steps.changed_files.outputs.affected_months }}; do
             YEAR=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f1)
             MONTH=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f2)
