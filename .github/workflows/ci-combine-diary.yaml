@@ -3,7 +3,7 @@ name: Combine Monthly Diaries
 on:
   push:
     paths:
-      - '????/??/??????.md' # 例: 2024/05/20240523.md のようなパスパターン
+      - '**/??????.md' # 任意のディレクトリ階層にあるYYYYMMDD.md形式のファイルを対象
 
 jobs:
   combine_diaries:
