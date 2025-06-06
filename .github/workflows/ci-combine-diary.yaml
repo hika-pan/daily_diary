@@ -58,7 +58,7 @@ jobs:
 
             .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
 
-            git add "daily_diary/${YEAR}/monthly/${YEAR}${MONTH}_combined.md"
+            git add "summary: daily_diary/${YEAR}/monthly/${YEAR}${MONTH}.md"
           done
 
       - name: Commit and push combined file

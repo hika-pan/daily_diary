@@ -17,7 +17,7 @@ MONTH="$2"
 DIARY_ROOT="daily_diary" # 日記のルートディレクトリ
 
 MONTHLY_DIR="${DIARY_ROOT}/${YEAR}/monthly"
-COMBINED_FILE="${MONTHLY_DIR}/${YEAR}${MONTH}_combined.md"
+COMBINED_FILE="${MONTHLY_DIR}/${YEAR}${MONTH}.md"
 
 echo "--- Processing ${DIARY_ROOT}/${YEAR}/${MONTH} ---"
 
