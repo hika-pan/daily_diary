@@ -79,7 +79,7 @@ class WeekendAnalyzer
     request.body = payload.to_json
 
     response = http.request(request)
-    
+
     if response.code == '200'
       result = JSON.parse(response.body)
       if result['candidates'] && !result['candidates'].empty?
