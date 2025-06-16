@@ -41,9 +41,9 @@ class WeekendAnalyzer
   end
 
   def analyze_with_gemini(activities)
-    activities_text = activities.filter_map do |act|
+    activities_text = activities.map do |act|
       "#{act['date']}: #{act['activity']}" unless act['activity'].empty?
-    end.join("\n")
+    end.compact.join("\n")
 
     prompt = <<~PROMPT
       以下は週末の活動記録です。この人の休日の過ごし方を分析してください。
