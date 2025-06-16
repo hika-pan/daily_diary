@@ -9,7 +9,7 @@ require 'time'
 class WeekendAnalyzer
   def initialize(api_key)
     @api_key = api_key
-    @base_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent'
+    @base_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent'
   end
 
   def read_weekend_diary(file_path)
