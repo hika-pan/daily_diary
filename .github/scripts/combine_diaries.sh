@@ -14,7 +14,7 @@ fi
 
 YEAR="$1"
 MONTH="$2"
-DIARY_ROOT="daily_diary" # 日記のルートディレクトリ
+DIARY_ROOT="diary" # 日記のルートディレクトリ
 
 MONTHLY_DIR="${DIARY_ROOT}/${YEAR}/monthly"
 COMBINED_FILE="${MONTHLY_DIR}/${YEAR}${MONTH}.md"
