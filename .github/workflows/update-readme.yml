@@ -1,10 +1,9 @@
 name: Update README
 
 on:
-  push:  # すべてのpushで実行（デバッグ用）
   schedule:
-    # 毎日朝9時（JST 18時）に実行
-    - cron: '0 9 * * *'
+    # 毎日朝9時（JST）に実行 - UTC 0時
+    - cron: '0 0 * * *'
   workflow_dispatch:  # 手動実行も可能
 
 permissions:
