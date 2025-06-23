@@ -17,18 +17,18 @@ end
 def get_diary_title(year, month, day)
   path = diary_path(year, month, day)
   return nil unless File.exist?(path)
-  
+
   lines = File.readlines(path, encoding: 'UTF-8')
   # "# 日記" を除いて最初の段落を取得
   content_lines = lines.drop_while { |line| line.strip.empty? || line.strip == "# 日記" }
   first_paragraph = content_lines.take_while { |line| !line.strip.empty? }
-  
+
   if first_paragraph.any?
     # 最初の文を取得（句点まで）
     first_sentence = first_paragraph.join.gsub(/\n/, '').match(/^[^\n。！？]*[。！？]?/)
     return first_sentence ? first_sentence[0].strip.gsub(/^　+/, '') : nil
   end
-  
+
   nil
 end
 
@@ -42,7 +42,7 @@ end
 # 最新の日記を取得
 def get_latest_diary
   today = Date.today
-  
+
   # 今日から過去30日間をチェック
   30.times do |i|
     check_date = today - i
@@ -55,7 +55,7 @@ def get_latest_diary
       }
     end
   end
-  
+
   nil
 end
 
@@ -63,7 +63,7 @@ end
 def get_recent_diaries
   today = Date.today
   recent_diaries = []
-  
+
   # 過去7日間をチェック
   7.times do |i|
     check_date = today - i
@@ -76,7 +76,7 @@ def get_recent_diaries
       }
     end
   end
-  
+
   recent_diaries
 end
 
@@ -102,7 +102,7 @@ def generate_readme
   latest = get_latest_diary
   recent = get_recent_diaries
   monthly = get_monthly_diaries
-  
+
   readme_content = <<~README
     # dairy_diary
 
@@ -111,16 +111,16 @@ def generate_readme
     ## 最新の日記
 
   README
-  
+
   if latest
     title_text = latest[:title] ? " - #{latest[:title]}" : ""
     readme_content += "- [#{japanese_date(latest[:year], latest[:month], latest[:day])}](#{diary_path(latest[:year], latest[:month], latest[:day])})#{title_text}\n\n"
   else
     readme_content += "現在、公開されている日記はありません。\n\n"
   end
-  
+
   readme_content += "## 最新1週間の日記\n\n"
-  
+
   if recent.any?
     recent.each do |diary|
       title_text = diary[:title] ? " - #{diary[:title]}" : ""
@@ -130,24 +130,24 @@ def generate_readme
   else
     readme_content += "最近の日記はありません。\n\n"
   end
-  
+
   readme_content += "## その他の日記\n\n"
   readme_content += "### 月次まとめ\n\n"
-  
+
   if monthly.any?
     monthly.first(6).each do |diary|
       readme_content += "- [#{diary[:title]}](#{diary[:path]})\n"
     end
     readme_content += "\n"
   end
-  
+
   readme_content += "### 週末の記録\n\n"
   readme_content += "- [週末やったこと](diary/2025/weekend/weekend_diary.md)\n"
   readme_content += "- [週末分析レポート](diary/2025/weekend/analysis_report.md)\n\n"
-  
-  readme_content += "## 管理\n\n"
+
+  readme_content += "## 管理者用\n\n"
   readme_content += "Gemini API ダッシュボード <https://aistudio.google.com/apikey>\n"
-  
+
   readme_content
 end
 
