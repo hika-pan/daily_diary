@@ -1,0 +1,59 @@
+name: Update README
+
+on:
+  push:  # すべてのpushで実行（デバッグ用）
+  schedule:
+    # 毎日朝9時（JST 18時）に実行
+    - cron: '0 9 * * *'
+  workflow_dispatch:  # 手動実行も可能
+
+permissions:
+  contents: write
+
+jobs:
+  update_readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.4'
+
+      - name: Make update script executable
+        run: chmod +x .github/scripts/update_readme.rb
+
+      - name: Update README
+        run: |
+          ruby .github/scripts/update_readme.rb
+
+      - name: Check if README was changed
+        id: check_changes
+        run: |
+          if git diff --quiet README.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Commit and push README if changed
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add README.md
+          git commit -m "📝 Update README with latest diary entries
+
+          🤖 Generated with [Claude Code](https://claude.ai/code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push
+
+      - name: No changes detected
+        if: steps.check_changes.outputs.changed == 'false'
+        run: echo "README.md is already up to date"
