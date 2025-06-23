@@ -1,9 +1,7 @@
 name: Update README
 
 on:
-  push:
-    paths:
-      - 'diary/**/*.md'
+  push:  # すべてのpushで実行（デバッグ用）
   schedule:
     # 毎日朝9時（JST 18時）に実行
     - cron: '0 9 * * *'
