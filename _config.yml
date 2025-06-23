@@ -1,0 +1,25 @@
+# Site settings
+title: "dairy_diary - 毎日書く日記"
+description: "毎日の出来事を記録した日記サイトです。日々の思い出や体験を綴っています。"
+url: "https://hika-pan.github.io"
+baseurl: "/daily_diary"
+author: "hika-pan"
+
+# Social/OG settings
+twitter:
+  username: hika-pan # Twitterのユーザーネームがあれば設定
+
+# Jekyll plugins
+plugins:
+  - jekyll-seo-tag
+
+# SEO tag settings
+lang: ja_JP
+locale: ja_JP
+
+# Site logo/image for social sharing
+logo: /assets/images/logo.png # ロゴ画像があれば設定
+image: /assets/images/og-image.jpg # OGP用画像があれば設定
+
+# Additional metadata
+keywords: "日記, ブログ, 日常, 記録"

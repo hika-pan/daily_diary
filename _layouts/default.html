@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO and OGP tags -->
+    {% seo %}
+    
+    <!-- Custom OGP tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="dairy_diary">
+    <meta property="og:locale" content="ja_JP">
+    
+    {% if page.title %}
+        <meta property="og:title" content="{{ page.title }} - dairy_diary">
+        <meta name="twitter:title" content="{{ page.title }} - dairy_diary">
+    {% else %}
+        <meta property="og:title" content="dairy_diary - 毎日書く日記">
+        <meta name="twitter:title" content="dairy_diary - 毎日書く日記">
+    {% endif %}
+    
+    {% if page.description %}
+        <meta property="og:description" content="{{ page.description }}">
+        <meta name="twitter:description" content="{{ page.description }}">
+    {% else %}
+        <meta property="og:description" content="毎日の出来事を記録した日記サイトです。日々の思い出や体験を綴っています。">
+        <meta name="twitter:description" content="毎日の出来事を記録した日記サイトです。日々の思い出や体験を綴っています。">
+    {% endif %}
+    
+    <meta property="og:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+    <meta name="twitter:url" content="{{ site.url }}{{ site.baseurl }}{{ page.url }}">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary">
+    {% if site.twitter.username %}
+        <meta name="twitter:site" content="@{{ site.twitter.username }}">
+        <meta name="twitter:creator" content="@{{ site.twitter.username }}">
+    {% endif %}
+    
+    <!-- Favicon -->
+    <link rel="icon" href="{{ '/favicon.ico' | relative_url }}" type="image/x-icon">
+    
+    <title>{% if page.title %}{{ page.title }} - dairy_diary{% else %}dairy_diary - 毎日書く日記{% endif %}</title>
+    
+    <style>
+        body {
+            font-family: 'Hiragino Sans', 'ヒラギノ角ゴシック', 'Yu Gothic', 'メイリオ', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        
+        a:hover {
+            text-decoration: underline;
+        }
+        
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1><a href="{{ '/' | relative_url }}">dairy_diary</a></h1>
+        <p>毎日書く日記</p>
+    </header>
+    
+    <main>
+        {{ content }}
+    </main>
+    
+    <footer>
+        <hr>
+        <p><small>&copy; 2025 dairy_diary. All rights reserved.</small></p>
+    </footer>
+</body>
+</html>

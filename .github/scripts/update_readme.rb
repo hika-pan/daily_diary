@@ -104,6 +104,12 @@ def generate_readme
   monthly = get_monthly_diaries
 
   readme_content = <<~README
+    ---
+    layout: default
+    title: "毎日書く日記"
+    description: "毎日の出来事を記録した日記サイトです。最新の日記や過去の記録をご覧いただけます。"
+    ---
+
     # dairy_diary
 
     毎日書く日記
