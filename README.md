@@ -25,6 +25,11 @@
 - [週末やったこと](diary/2025/weekend/weekend_diary.md)
 - [週末分析レポート](diary/2025/weekend/analysis_report.md)
 
+## リンク
+
+- [GitHub Pages](https://hika-pan.github.io/daily_diary/)
+- [GitHubリポジトリ](https://github.com/hika-pan/daily_diary)
+
 ## 管理者用
 
 Gemini API ダッシュボード <https://aistudio.google.com/apikey>
