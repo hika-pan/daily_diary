@@ -13,6 +13,14 @@ twitter:
 plugins:
   - jekyll-seo-tag
 
+# Markdown processor
+markdown: kramdown
+highlighter: rouge
+
+# Include files
+include:
+  - README.md
+
 # SEO tag settings
 lang: ja_JP
 locale: ja_JP

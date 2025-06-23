@@ -165,5 +165,6 @@ end
 if __FILE__ == $0
   readme_content = generate_readme
   File.write('README.md', readme_content, encoding: 'UTF-8')
-  puts "README.md updated successfully"
+  File.write('index.md', readme_content, encoding: 'UTF-8')
+  puts "README.md and index.md updated successfully"
 end
