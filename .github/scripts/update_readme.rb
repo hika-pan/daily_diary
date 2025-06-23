@@ -146,6 +146,7 @@ def generate_readme
   readme_content += "- [週末分析レポート](diary/2025/weekend/analysis_report.md)\n\n"
 
   readme_content += "## リンク\n\n"
+  readme_content += "- [GitHub Pages](https://hika-pan.github.io/daily_diary/)\n"
   readme_content += "- [GitHubリポジトリ](https://github.com/hika-pan/daily_diary)\n\n"
 
   readme_content += "## 管理者用\n\n"
