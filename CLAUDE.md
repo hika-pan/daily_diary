@@ -28,6 +28,12 @@
 chmod +x .github/scripts/*.sh
 ```
 
+### README更新
+```bash
+# READMEを手動で更新（GitHub Pagesのトップページ）
+ruby .github/scripts/update_readme.rb
+```
+
 ### 週末分析
 ```bash
 # 手動で週末分析を実行（GEMINI_API_KEY が必要）
@@ -37,8 +43,9 @@ ruby .github/scripts/analyze_weekend.rb
 ## 主要な自動化機能
 
 1. **月次日記統合**: 日記ファイルがプッシュされると、GitHub Actions が自動的に日々の日記ファイルを月次サマリーに統合
-2. **週末分析**: 毎週月曜日にスケジュールされた GitHub Action が Gemini API を使用して週末活動を分析
-3. **日付処理**: Ruby スクリプトが日記エントリの曜日を決定
+2. **README自動更新**: 日記ファイルが更新されると、GitHub Pages用のREADMEを自動更新（最新の日記、最新1週間の日記、その他のセクション）
+3. **週末分析**: 毎週月曜日にスケジュールされた GitHub Action が Gemini API を使用して週末活動を分析
+4. **日付処理**: Ruby スクリプトが日記エントリの曜日を決定
 
 ## ファイル命名規則
 
@@ -55,5 +62,6 @@ Claude Code は `.claude/settings.local.json` で制限されたbash権限が設
 ## GitHub ワークフロー
 
 - `ci-combine-diary.yaml`: 日々の日記を月次ファイルに自動統合
+- `update-readme.yml`: GitHub Pages用のREADMEを自動更新（日記更新時および毎日定時）
 - `weekend-analysis.yml`: Gemini API を使用した週末活動の週次分析
-- 両方のワークフローは GitHub Actions ボットを使用して自動的に変更をコミット
+- すべてのワークフローは GitHub Actions ボットを使用して自動的に変更をコミット
