@@ -3,7 +3,9 @@ name: Combine Monthly Diaries
 on:
   push:
     paths:
-      - 'diary/**/*.md'
+      - 'diary/*/[0-9][0-9]/*.md'
+    paths-ignore:
+      - 'diary/*/monthly/*.md'
 
 permissions:
   contents: write
