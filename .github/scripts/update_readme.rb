@@ -59,13 +59,13 @@ def get_latest_diary
   nil
 end
 
-# 最新1週間の日記を取得
+# 最新1週間の日記を取得（最新日を除く）
 def get_recent_diaries
   today = Date.today
   recent_diaries = []
 
-  # 過去7日間をチェック
-  7.times do |i|
+  # 昨日から過去7日間をチェック（最新の日は除く）
+  (1..7).each do |i|
     check_date = today - i
     if diary_exists?(check_date.year, check_date.month, check_date.day)
       recent_diaries << {
