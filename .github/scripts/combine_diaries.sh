@@ -63,8 +63,8 @@ find "${DIARY_ROOT}/${YEAR}/${MONTH}" -maxdepth 1 -type f -name "????????.md" | 
     echo "## ${FILE_YEAR}/${FILE_MONTH}/${FILE_DAY} (${DOW_NAME})" >> "$COMBINED_FILE"
     echo "" >> "$COMBINED_FILE"
 
-    # 元の日記ファイルの内容を読み込み、"# 日記"の見出しと、その直後の空白行だけを除外して結合
-    sed -e '1{/^# 日記$/d;}' -e '2{/^$/d;}' "$file" >> "$COMBINED_FILE"
+    # 元の日記ファイルの内容を読み込み、トップレベルの見出し（# で始まる行）と、その直後の空白行を除外して結合
+    sed -e '1{/^# /d;}' -e '2{/^$/d;}' "$file" >> "$COMBINED_FILE"
     echo "" >> "$COMBINED_FILE"
   fi
 done
