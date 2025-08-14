@@ -1,5 +1,9 @@
 name: Update README
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   schedule:
     # 毎日朝9時（JST）に実行 - UTC 0時
