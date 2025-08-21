@@ -1,12 +1,11 @@
-# DISABLED - Replaced by combined-diary-workflow.yml
-# name: Weekend Diary Analysis
+name: Weekend Diary Analysis
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# on:
-#   schedule:
+on:
+  schedule:
     - cron: '0 9 * * 1'  # 毎週月曜日の朝9時（JST 18時）に実行
   workflow_dispatch:  # 手動実行も可能
   push:  # テスト用（後で削除推奨）

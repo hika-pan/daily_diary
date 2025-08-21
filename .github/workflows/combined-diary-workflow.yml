@@ -1,0 +1,136 @@
+name: Combined Diary Workflow
+
+concurrency:
+  group: diary-updates
+  cancel-in-progress: false  # キャンセルを防ぐ
+
+on:
+  push:
+    paths:
+      - 'diary/*/[0-9][0-9]/*.md'
+      - '!diary/*/monthly/*.md'
+  schedule:
+    - cron: '0 0 * * *'  # 毎日朝9時（JST）にREADME更新
+    - cron: '0 9 * * 1'  # 毎週月曜日の朝9時（JST 18時）に週末分析
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  process_diary:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4.4'
+          bundler-cache: true
+
+      - name: Make scripts executable
+        run: chmod +x .github/scripts/*.sh .github/scripts/*.rb
+
+      # 日記ファイルが変更された場合の処理
+      - name: Process diary changes
+        if: github.event_name == 'push'
+        id: diary_changes
+        run: |
+          echo "Processing diary file changes..."
+          
+          # 変更されたファイルを取得
+          if git rev-parse --verify HEAD~1 &>/dev/null; then
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'diary/**/*.md' | grep -E '^diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$' || true)
+          else
+            CHANGED_FILES=$(git ls-files 'diary/**/*.md' | grep -E '^diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$' || true)
+          fi
+
+          if [ -n "$CHANGED_FILES" ]; then
+            AFFECTED_MONTHS_RAW=$(echo "$CHANGED_FILES" | sed -E 's|^diary/([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
+            AFFECTED_MONTHS=$(echo "$AFFECTED_MONTHS_RAW" | tr '\n' ' ' | sed -E 's/ +$//')
+            
+            echo "Combining diaries for months: $AFFECTED_MONTHS"
+            for MONTH_PATH_YEAR_MONTH in $AFFECTED_MONTHS; do
+              YEAR=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f1)
+              MONTH=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f2)
+              .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
+              git add "diary/${YEAR}/monthly/${YEAR}${MONTH}.md"
+            done
+            
+            echo "diary_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "diary_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # README更新（pushイベント時または毎日の定時実行時）
+      - name: Update README
+        if: github.event_name == 'push' || (github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *'))
+        id: readme_update
+        run: |
+          echo "Updating README..."
+          ruby .github/scripts/update_readme.rb
+          
+          if git diff --quiet README.md index.md; then
+            echo "readme_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            git add README.md index.md
+            echo "readme_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 週末分析（月曜日の定時実行時）
+      - name: Weekend Analysis
+        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 9 * * 1')
+        id: weekend_analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          echo "Running weekend analysis..."
+          ruby .github/scripts/analyze_weekend.rb
+          
+          if [ -f "diary/2025/weekend/analysis_report.md" ]; then
+            git add diary/2025/weekend/analysis_report.md
+            if git diff --staged --quiet diary/2025/weekend/analysis_report.md; then
+              echo "weekend_changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "weekend_changed=true" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "weekend_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 一括コミット＆プッシュ（変更がある場合のみ）
+      - name: Commit and push all changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # 変更があるかチェック
+          if ! git diff --staged --quiet; then
+            # コミットメッセージを構築
+            COMMIT_MSG=""
+            
+            if [ "${{ steps.diary_changes.outputs.diary_changed }}" == "true" ]; then
+              COMMIT_MSG="${COMMIT_MSG}📚 Update combined diary files\n"
+            fi
+            
+            if [ "${{ steps.readme_update.outputs.readme_changed }}" == "true" ]; then
+              COMMIT_MSG="${COMMIT_MSG}📝 Update README and index\n"
+            fi
+            
+            if [ "${{ steps.weekend_analysis.outputs.weekend_changed }}" == "true" ]; then
+              COMMIT_MSG="${COMMIT_MSG}🤖 Update weekend analysis report\n"
+            fi
+            
+            # コミット実行
+            git commit -m "$(echo -e "$COMMIT_MSG\n🤖 Generated with [Claude Code](https://claude.ai/code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>")"
+            
+            # プッシュ（1回だけ）
+            git push
+            echo "✅ All changes pushed in a single commit"
+          else
+            echo "ℹ️ No changes to commit"
+          fi
