@@ -1,15 +1,15 @@
 # DISABLED - Replaced by combined-diary-workflow.yml
 # name: Combine Monthly Diaries
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+# concurrency:
+#   group: ${{ github.workflow }}-${{ github.ref }}
+#   cancel-in-progress: true
 
 # on:
 #   push:
-    paths:
-      - 'diary/*/[0-9][0-9]/*.md'
-      - '!diary/*/monthly/*.md'
+#     paths:
+#       - 'diary/*/[0-9][0-9]/*.md'
+#       - '!diary/*/monthly/*.md'
 
 permissions:
   contents: write
