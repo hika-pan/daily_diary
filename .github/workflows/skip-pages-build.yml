@@ -1,0 +1,20 @@
+name: Skip Pages Build
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  skip-build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Skip automatic pages build
+        run: |
+          echo "Skipping automatic GitHub Pages build to prevent conflicts"
+          echo "Pages will be built when necessary by other workflows"

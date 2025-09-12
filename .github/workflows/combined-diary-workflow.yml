@@ -1,7 +1,7 @@
 name: Combined Diary Workflow
 
 concurrency:
-  group: diary-updates
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false  # キャンセルを防ぐ
 
 on:
