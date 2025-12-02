@@ -6,8 +6,8 @@ concurrency:
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 毎日朝9時（JST）に日記統合・README更新
-    - cron: '0 9 * * 1'  # 毎週月曜日の朝9時（JST 18時）に週末分析
+    - cron: '0 0 * * *'  # 毎日 JST 9時（UTC 0時）に日記統合・README更新
+    - cron: '0 9 * * 1'  # 毎週月曜日 JST 18時（UTC 9時）に週末分析
   workflow_dispatch:
 
 permissions:
@@ -33,7 +33,7 @@ jobs:
 
       # 日記統合処理（毎日の定時実行時）
       - name: Combine diaries
-        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *') || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *')) || github.event_name == 'workflow_dispatch'
         id: diary_changes
         run: |
           echo "Combining diaries..."
@@ -58,7 +58,7 @@ jobs:
 
       # README更新（毎日の定時実行時）
       - name: Update README
-        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *') || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *')) || github.event_name == 'workflow_dispatch'
         id: readme_update
         run: |
           echo "Updating README..."
@@ -80,10 +80,11 @@ jobs:
         run: |
           echo "Running weekend analysis..."
           ruby .github/scripts/analyze_weekend.rb
-          
-          if [ -f "diary/2025/weekend/analysis_report.md" ]; then
-            git add diary/2025/weekend/analysis_report.md
-            if git diff --staged --quiet diary/2025/weekend/analysis_report.md; then
+
+          YEAR=$(date +%Y)
+          if [ -f "diary/${YEAR}/weekend/analysis_report.md" ]; then
+            git add "diary/${YEAR}/weekend/analysis_report.md"
+            if git diff --staged --quiet "diary/${YEAR}/weekend/analysis_report.md"; then
               echo "weekend_changed=false" >> "$GITHUB_OUTPUT"
             else
               echo "weekend_changed=true" >> "$GITHUB_OUTPUT"
