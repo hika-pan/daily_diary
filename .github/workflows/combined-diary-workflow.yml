@@ -5,12 +5,8 @@ concurrency:
   cancel-in-progress: false  # キャンセルを防ぐ
 
 on:
-  push:
-    paths:
-      - 'diary/*/[0-9][0-9]/*.md'
-      - '!diary/*/monthly/*.md'
   schedule:
-    - cron: '0 0 * * *'  # 毎日朝9時（JST）にREADME更新
+    - cron: '0 0 * * *'  # 毎日朝9時（JST）に日記統合・README更新
     - cron: '0 9 * * 1'  # 毎週月曜日の朝9時（JST 18時）に週末分析
   workflow_dispatch:
 
@@ -35,40 +31,34 @@ jobs:
       - name: Make scripts executable
         run: chmod +x .github/scripts/*.sh .github/scripts/*.rb
 
-      # 日記ファイルが変更された場合の処理
-      - name: Process diary changes
-        if: github.event_name == 'push'
+      # 日記統合処理（毎日の定時実行時）
+      - name: Combine diaries
+        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *') || github.event_name == 'workflow_dispatch'
         id: diary_changes
         run: |
-          echo "Processing diary file changes..."
-          
-          # 変更されたファイルを取得
-          if git rev-parse --verify HEAD~1 &>/dev/null; then
-            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD -- 'diary/**/*.md' | grep -E '^diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$' || true)
-          else
-            CHANGED_FILES=$(git ls-files 'diary/**/*.md' | grep -E '^diary/[0-9]{4}/[0-9]{2}/[0-9]{8}\.md$' || true)
-          fi
+          echo "Combining diaries..."
 
-          if [ -n "$CHANGED_FILES" ]; then
-            AFFECTED_MONTHS_RAW=$(echo "$CHANGED_FILES" | sed -E 's|^diary/([0-9]{4})/([0-9]{2})/[0-9]{8}\.md$|\1/\2|' | sort -u)
-            AFFECTED_MONTHS=$(echo "$AFFECTED_MONTHS_RAW" | tr '\n' ' ' | sed -E 's/ +$//')
-            
-            echo "Combining diaries for months: $AFFECTED_MONTHS"
-            for MONTH_PATH_YEAR_MONTH in $AFFECTED_MONTHS; do
-              YEAR=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f1)
-              MONTH=$(echo "$MONTH_PATH_YEAR_MONTH" | cut -d'/' -f2)
-              .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
-              git add "diary/${YEAR}/monthly/${YEAR}${MONTH}.md"
-            done
-            
-            echo "diary_changed=true" >> "$GITHUB_OUTPUT"
+          # 現在の年月を取得
+          YEAR=$(date +%Y)
+          MONTH=$(date +%m)
+
+          # 今月の日記を統合
+          .github/scripts/combine_diaries.sh "$YEAR" "$MONTH"
+
+          if [ -f "diary/${YEAR}/monthly/${YEAR}${MONTH}.md" ]; then
+            git add "diary/${YEAR}/monthly/${YEAR}${MONTH}.md"
+            if git diff --staged --quiet "diary/${YEAR}/monthly/${YEAR}${MONTH}.md"; then
+              echo "diary_changed=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "diary_changed=true" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "diary_changed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # README更新（pushイベント時または毎日の定時実行時）
+      # README更新（毎日の定時実行時）
       - name: Update README
-        if: github.event_name == 'push' || (github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *'))
+        if: github.event_name == 'schedule' && contains(github.event.schedule, '0 0 * * *') || github.event_name == 'workflow_dispatch'
         id: readme_update
         run: |
           echo "Updating README..."
