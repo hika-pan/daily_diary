@@ -148,8 +148,9 @@ def generate_readme
   end
 
   readme_content += "### 週末の記録\n\n"
-  readme_content += "- [週末やったこと](diary/2025/weekend/weekend_diary.md)\n"
-  readme_content += "- [週末分析レポート](diary/2025/weekend/analysis_report.md)\n\n"
+  current_year = Date.today.year
+  readme_content += "- [週末やったこと](diary/#{current_year}/weekend/weekend_diary.md)\n"
+  readme_content += "- [週末分析レポート](diary/#{current_year}/weekend/analysis_report.md)\n\n"
 
   readme_content += "## リンク\n\n"
   readme_content += "- [GitHub Pages](https://hika-pan.github.io/daily_diary/)\n"

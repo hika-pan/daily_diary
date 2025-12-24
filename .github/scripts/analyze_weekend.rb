@@ -148,8 +148,9 @@ def main
     return
   end
 
-  diary_path = 'diary/2025/weekend/weekend_diary.md'
-  output_path = 'diary/2025/weekend/analysis_report.md'
+  current_year = Time.now.year
+  diary_path = "diary/#{current_year}/weekend/weekend_diary.md"
+  output_path = "diary/#{current_year}/weekend/analysis_report.md"
 
   analyzer = WeekendAnalyzer.new(api_key)
   success = analyzer.generate_report(diary_path, output_path)
