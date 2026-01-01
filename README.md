@@ -14,7 +14,7 @@ description: "毎日の出来事を記録した日記サイトです。最新の
 
 ## 最新1週間の日記
 
-- [2025/12/24(水)](diary/2025/12/20251224.md) - ポケモンに生活を支配されている。
+最近の日記はありません。
 
 ## その他の日記
 
@@ -29,8 +29,8 @@ description: "毎日の出来事を記録した日記サイトです。最新の
 
 ### 週末の記録
 
-- [週末やったこと](diary/2025/weekend/weekend_diary.md)
-- [週末分析レポート](diary/2025/weekend/analysis_report.md)
+- [週末やったこと](diary/2026/weekend/weekend_diary.md)
+- [週末分析レポート](diary/2026/weekend/analysis_report.md)
 
 ## リンク
 
